@@ -32,8 +32,7 @@ const utils = require('./utils');
 import CustomItem from './components/SchemaComponents/SchemaOther.js';
 import LocalProvider from './components/LocalProvider/index.js';
 import MockSelect from './components/MockSelect/index.js';
-
-
+import DropPlus from './components/DropPlus/index.js';
 
 class jsonSchema extends React.Component {
   constructor(props) {
@@ -271,6 +270,7 @@ class jsonSchema extends React.Component {
 
     let disabled =
       this.props.schema.type === 'object' || this.props.schema.type === 'array' ? false : true;
+    let isAddRootFiled = !((schema['oneOf'] && schema['oneOf'].length) || (schema['anyOf'] && schema['anyOf'].length));
 
     return (
       <div className="json-schema-react-editor">
@@ -463,11 +463,12 @@ class jsonSchema extends React.Component {
                   </Tooltip>
                 </span>
                 {schema.type === 'object' ? (
-                  <span onClick={() => this.addChildField('properties')}>
-                    <Tooltip placement="top" title={LocalProvider('add_child_node')}>
-                      <Icon type="plus" className="plus" />
-                    </Tooltip>
-                  </span>
+                  // <span onClick={() => this.addChildField('properties')}>
+                  //   <Tooltip placement="top" title={LocalProvider('add_child_node')}>
+                  //     <Icon type="plus" className="plus" />
+                  //   </Tooltip>
+                  // </span>
+                  <DropPlus root prefix={['oneOf']} isAddRootFiled={isAddRootFiled}/>
                 ) : null}
               </Col>
             </Row>

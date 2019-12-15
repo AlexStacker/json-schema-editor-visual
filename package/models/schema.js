@@ -13,7 +13,9 @@ export default {
       required: []
     },
     open: {
-      properties: true
+      properties: true,
+      anyOf: true,
+      oneOf: true
     }
   },
 
@@ -131,9 +133,13 @@ export default {
     let parentKeys = utils.getParentKeys(keys);
     let parentData = utils.getData(oldData, parentKeys);
     let newParentData = {};
-    for (let i in parentData) {
-      if (i !== name) {
-        newParentData[i] = parentData[i];
+    if (parentData instanceof Array) {
+      newParentData = parentData.filter((data, idx) => (idx != name));
+    } else {
+      for (let i in parentData) {
+        if (i !== name) {
+          newParentData[i] = parentData[i];
+        }
       }
     }
 
@@ -187,6 +193,52 @@ export default {
     let parentData = utils.getData(oldData, parentKeys);
     let requiredData = [].concat(parentData.required || []);
     requiredData.push(ranName);
+    parentKeys.push('required');
+    utils.setData(state.data, parentKeys, requiredData);
+  },
+
+  addComplexFieldAction: function(state, action, oldState) {
+    const keys = action.prefix;
+    let oldData = oldState.data;
+    let name = action.name;
+    let propertiesData = utils.getData(oldData, keys);
+    let newPropertiesData = {};
+
+    let parentKeys = utils.getParentKeys(keys);
+    let parentData = utils.getData(oldData, parentKeys);
+    let requiredData = [].concat(parentData.required || []);
+
+    let complexKey = Object.keys(parentData).find((key) => (['oneOf', 'anyOf'].indexOf(key) > -1));
+
+    if (typeof(name) !== 'number' && !name) {
+      let ranName = 'field_' + fieldNum++;
+
+      if (complexKey) {
+        let dt = [{
+          properties: {},
+          required: []
+        }];
+
+        if (Object.keys(parentData.properties).length > 0) {
+          dt.unshift({
+            properties: parentData.properties,
+            required: parentData.required
+          });
+
+          // 删除原来的数据
+          delete parentData.properties;
+          delete parentData.required;
+        }
+        requiredData = [];
+        newPropertiesData = [].concat(propertiesData, dt);
+      } else {
+        newPropertiesData = Object.assign({}, propertiesData);
+        newPropertiesData[ranName] = utils.defaultSchema.string;
+        requiredData.push(ranName);
+      }
+    }
+    utils.setData(state.data, keys, newPropertiesData);
+    // add required
     parentKeys.push('required');
     utils.setData(state.data, parentKeys, requiredData);
   },

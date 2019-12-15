@@ -27,6 +27,7 @@ import { JSONPATH_JOIN_CHAR, SCHEMA_TYPE } from '../../utils.js';
 const InputGroup = Input.Group;
 import LocaleProvider from '../LocalProvider/index.js';
 import utils from '../../utils';
+import DropPlus from '../DropPlus/index.js';
 import MockSelect from '../MockSelect/index.js';
 
 const mapping = (name, data, showEdit, showAdv) => {
@@ -230,7 +231,7 @@ class SchemaItem extends PureComponent {
 
   componentWillMount() {
     const { prefix } = this.props;
-    let length = prefix.filter(name => name != 'properties').length;
+    let length = prefix.filter(name => ['properties', 'oneOf', 'anyOf'].indexOf(name) === -1).length;
     this.__tagPaddingLeftStyle = {
       paddingLeft: `${20 * (length + 1)}px`
     };
@@ -338,7 +339,7 @@ class SchemaItem extends PureComponent {
     let show = this.context.getOpenValue([prefixStr]);
     let showIcon = this.context.getOpenValue([prefixArrayStr]);
     return show ? (
-      <div>
+      <div className="schema-item">
         <Row type="flex" justify="space-around" align="middle">
           <Col
             span={8}
@@ -478,7 +479,34 @@ class SchemaObjectComponent extends Component {
 
   render() {
     const { data, prefix, showEdit, showAdv } = this.props;
-    return (
+    
+    let key;
+    let isComplex;
+    let nameArray = [].concat(prefix);
+    if((key = 'oneOf', data[key]) || (key = 'anyOf', data[key])) {
+      isComplex = !!data[key].length;
+      nameArray.splice(nameArray.length - 1, 1, key);
+    }
+
+    return isComplex ? (
+      <div className="complex-style">
+        {
+          data[key].map((dt, idx) => {
+
+            let mPrefix = [].concat(nameArray, idx);
+
+            return <ComplexSchema
+              key={idx}
+              data={dt}
+              name={name}
+              prefix={mPrefix}
+              showEdit={showEdit}
+              showAdv={showAdv}
+            />;
+          })
+        }
+      </div>
+      ) : (
       <div className="object-style">
         {Object.keys(data.properties).map((name, index) => (
           <SchemaItem
@@ -499,40 +527,162 @@ const SchemaObject = connect(state => ({
   open: state.schema.open
 }))(SchemaObjectComponent);
 
-const DropPlus = (props, context) => {
-  const { prefix, name, add } = props;
-  const Model = context.Model.schema;
-  const menu = (
-    <Menu>
-      <Menu.Item>
-        <span onClick={() => Model.addFieldAction({ prefix, name })}>
-          {LocaleProvider('sibling_node')}
-        </span>
-      </Menu.Item>
-      <Menu.Item>
-        <span
-          onClick={() => {
-            Model.setOpenValueAction({ key: [].concat(prefix, name, 'properties'), value: true });
-            Model.addChildFieldAction({ key: [].concat(prefix, name, 'properties') });
-          }}
-        >
-          {LocaleProvider('child_node')}
-        </span>
-      </Menu.Item>
-    </Menu>
-  );
+class ComplexSchema extends PureComponent {
+  constructor(props, context) {
+    super(props);
+    this._tagPaddingLeftStyle = {};
+    this.Model = context.Model.schema;
+  }
 
-  return (
-    <Tooltip placement="top" title={LocaleProvider('add_node')}>
-      <Dropdown overlay={menu}>
-        <Icon type="plus" className="plus" />
-      </Dropdown>
-    </Tooltip>
-  );
-};
+  componentWillMount() {
+    const { prefix } = this.props;
+    let length = prefix.filter(name => name != 'properties').length;
+    this.__tagPaddingLeftStyle = {
+      paddingLeft: `${10 * (length + 1)}px`
+    };
+  }
 
-DropPlus.contextTypes = {
-  Model: PropTypes.object
+  getPrefix() {
+    return [].concat(this.props.prefix);
+  }
+
+  handleClickIcon = () => {
+    let prefix = this.getPrefix();
+    // 数据存储在 properties.name.properties下
+    let keyArr = [].concat(prefix, 'properties');
+    this.Model.setOpenValueAction({ key: keyArr });
+  };
+
+  // 修改备注信息
+  handleChangeDesc = (e) => {
+    let prefix = this.getPrefix();
+    let key = [].concat(prefix, 'description');
+    let value = e.target.value;
+    this.Model.changeValueAction({ key, value });
+  }
+
+  // 删除节点
+  handleDeleteItem = () => {
+    const { prefix, name } = this.props;
+    let nameArray = this.getPrefix();
+    this.Model.deleteItemAction({ key: nameArray });
+    this.Model.enableRequireAction({ prefix, name, required: false });
+  };
+
+  /*
+  展示备注编辑弹窗
+  editorName: 弹窗名称 ['description', 'mock']
+  type: 如果当前字段是object || array showEdit 不可用
+  */
+  handleShowEdit = (editorName, type) => {
+    const { data, name, showEdit } = this.props;
+
+    showEdit(this.getPrefix(), editorName, data.properties[name][editorName], type);
+  };
+
+  // 展示高级设置弹窗
+  handleShowAdv = () => {
+    const { data, name, showAdv } = this.props;
+    showAdv(this.getPrefix(), data);
+  };
+
+  // 增加子节点
+  handleAddChildField = () => {
+    let prefix = this.getPrefix();
+    let keyArr = [].concat(prefix, 'properties');
+    this.Model.addChildFieldAction({ key: keyArr });
+    this.Model.setOpenValueAction({ key: keyArr, value: true });
+  };
+
+  render() {
+    const { data, prefix, showEdit, showAdv } = this.props;
+
+    let prefixArrayStr = [].concat(prefix, 'properties').join(JSONPATH_JOIN_CHAR);
+
+    let showIcon = this.context.getOpenValue([prefixArrayStr]);
+
+    return (
+      <div className="scene-style">
+        <Row className="array-item-type" type="flex" justify="space-around" align="middle">
+          <Col
+            span={24}
+            className="col-item name-item col-item-name"
+            style={this.__tagPaddingLeftStyle}
+          >
+            <Row type="flex" justify="space-around" align="middle" className="col-scene-item">
+              <Col span={24} className="scene-col">
+                <span>
+                  {LocaleProvider('scene')}: {data.description}
+                </span>
+              </Col>
+            </Row>
+            <Row type="flex" justify="space-around" align="middle" className="col-scene-item">
+              <Col span={21}>
+                <Row type="flex" justify="space-around" align="middle">
+                  <Col span={1} className="down-style-col">
+                    <span className="down-style" onClick={this.handleClickIcon}>
+                      {showIcon ? (
+                        <Icon className="icon-object" type="caret-down" />
+                      ) : (
+                        <Icon className="icon-object" type="caret-right" />
+                      )}
+                    </span>
+                  </Col>
+                  <Col span={23}>
+                    <Input 
+                      placeholder={LocaleProvider('scene')}
+                      value={data.description}
+                      onChange={this.handleChangeDesc}
+                    />
+                  </Col>
+              </Row>
+              </Col>
+              <Col span={3}  className="col-item col-item-setting">
+                <span className="adv-set" onClick={this.handleShowAdv}>
+                  <Tooltip placement="top" title={LocaleProvider('adv_setting')}>
+                    <Icon type="setting" />
+                  </Tooltip>
+                </span>
+                <span className="delete-item" onClick={this.handleDeleteItem}>
+                  <Icon type="close" className="close" />
+                </span>
+                <span onClick={this.handleAddChildField}>
+                  <Tooltip placement="top" title={LocaleProvider('add_child_node')}>
+                    <Icon type="plus" className="plus" />
+                  </Tooltip>
+                </span>
+              </Col>
+            </Row>
+            <Row type="flex" align="middle" className="col-scene-item">
+              <Col span={24}>
+                {
+                  Object.keys(data.properties).map((name, index) => {
+                    let mPrefix = [...prefix, 'properties']
+                    return (
+                      <SchemaItem
+                        key={index}
+                        data={data}
+                        name={name}
+                        prefix={mPrefix}
+                        showEdit={showEdit}
+                        showAdv={showAdv}
+                      />
+                    )
+                  })
+                }
+              </Col>
+            </Row>
+          </Col>
+        </Row>
+      </div>
+    )
+  }
+}
+
+ComplexSchema.contextTypes = {
+  getOpenValue: PropTypes.func,
+  Model: PropTypes.object,
+  isMock: PropTypes.bool
 };
 
 const SchemaJson = props => {

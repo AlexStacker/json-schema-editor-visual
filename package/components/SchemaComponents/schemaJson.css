@@ -19,7 +19,13 @@
   margin-top: 8px;
 }
 
+.json-schema-react-editor .complex-style {
+  margin-top: 8px;
+}
 
+.json-schema-react-editor .complex-style .col-scene-item {
+  margin-bottom: 8px;
+}
 
 .json-schema-react-editor .col-item-type{
   text-align: center  
