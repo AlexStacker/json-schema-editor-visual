@@ -598,7 +598,6 @@ class ComplexSchema extends PureComponent {
 
   render() {
     const { data, prefix, showEdit, showAdv } = this.props;
-    console.log(data);
     let prefixArrayStr = [].concat(prefix, 'properties').join(JSONPATH_JOIN_CHAR);
 
     let showIcon = this.context.getOpenValue([prefixArrayStr]);

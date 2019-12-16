@@ -121,7 +121,6 @@ function getComplexKey(data) {
 exports.getComplexKey = getComplexKey;
 
 function handleSchemaRequired(schema, checked, isComplex) {
-  // console.log(schema)
   if (isComplex || schema.type === 'object') {
     let requiredtitle = getFieldstitle(schema.properties);
 
