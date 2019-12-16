@@ -200,45 +200,46 @@ export default {
   addComplexFieldAction: function(state, action, oldState) {
     const keys = action.prefix;
     let oldData = oldState.data;
-    let name = action.name;
-    let propertiesData = utils.getData(oldData, keys);
-    let newPropertiesData = {};
+    // let name = action.name;
+    let complexData = utils.getData(oldData, keys);
+    let newComplexData = {};
 
     let parentKeys = utils.getParentKeys(keys);
     let parentData = utils.getData(oldData, parentKeys);
     let requiredData = [].concat(parentData.required || []);
 
-    let complexKey = Object.keys(parentData).find((key) => (['oneOf', 'anyOf'].indexOf(key) > -1));
+    let complexKey = utils.getComplexKey(parentData);
 
-    if (typeof(name) !== 'number' && !name) {
-      let ranName = 'field_' + fieldNum++;
+    if (complexKey) {
+      let data = [];
 
-      if (complexKey) {
-        let dt = [{
-          properties: {},
-          required: []
-        }];
+      // 将原来的 properties 作为 oneOf 的一种
+      if (Object.keys(parentData.properties).length > 0) {
+        data.push({
+          properties: parentData.properties,
+          required: parentData.required
+        });
 
-        if (Object.keys(parentData.properties).length > 0) {
-          dt.unshift({
-            properties: parentData.properties,
-            required: parentData.required
-          });
-
-          // 删除原来的数据
-          delete parentData.properties;
-          delete parentData.required;
-        }
-        requiredData = [];
-        newPropertiesData = [].concat(propertiesData, dt);
-      } else {
-        newPropertiesData = Object.assign({}, propertiesData);
-        newPropertiesData[ranName] = utils.defaultSchema.string;
-        requiredData.push(ranName);
+        // 删除原来的数据
+        delete parentData['properties'];
+        delete parentData['required'];
       }
+
+      data.push({
+        properties: {},
+        required: []
+      });
+
+      requiredData = [];
+      newComplexData = [].concat(complexData || [], data);
+    } else {
+      let ranName = 'field_' + fieldNum++;
+      newComplexData = Object.assign({}, complexData);
+      newComplexData[ranName] = utils.defaultSchema.string;
+      requiredData.push(ranName);
     }
-    utils.setData(state.data, keys, newPropertiesData);
-    // add required
+
+    utils.setData(state.data, keys, newComplexData);
     parentKeys.push('required');
     utils.setData(state.data, parentKeys, requiredData);
   },

@@ -86,7 +86,7 @@ class SchemaArray extends PureComponent {
     this.Model.changeValueAction({ key, value });
   };
 
-  handleChangeTitle = e =>{
+  handleChangeTitle = e => {
     let prefix = this.getPrefix();
     let key = [].concat(prefix, `title`);
     let value = e.target.value;
@@ -140,8 +140,8 @@ class SchemaArray extends PureComponent {
                       {showIcon ? (
                         <Icon className="icon-object" type="caret-down" />
                       ) : (
-                        <Icon className="icon-object" type="caret-right" />
-                      )}
+                          <Icon className="icon-object" type="caret-right" />
+                        )}
                     </span>
                   ) : null}
                 </Col>
@@ -168,7 +168,7 @@ class SchemaArray extends PureComponent {
             </Col>
             {this.context.isMock && (
               <Col span={3} className="col-item col-item-mock">
-                
+
                 <MockSelect
                   schema={items}
                   showEdit={() => this.handleShowEdit('mock', items.type)}
@@ -192,7 +192,7 @@ class SchemaArray extends PureComponent {
                 onChange={this.handleChangeDesc}
               />
             </Col>
-            <Col span={this.context.isMock ? 2: 3} className="col-item col-item-setting">
+            <Col span={this.context.isMock ? 2 : 3} className="col-item col-item-setting">
               <span className="adv-set" onClick={this.handleShowAdv}>
                 <Tooltip placement="top" title={LocaleProvider('adv_setting')}>
                   <Icon type="setting" />
@@ -353,8 +353,8 @@ class SchemaItem extends PureComponent {
                     {showIcon ? (
                       <Icon className="icon-object" type="caret-down" />
                     ) : (
-                      <Icon className="icon-object" type="caret-right" />
-                    )}
+                        <Icon className="icon-object" type="caret-right" />
+                      )}
                   </span>
                 ) : null}
               </Col>
@@ -432,8 +432,8 @@ class SchemaItem extends PureComponent {
             />
           </Col>
 
-          
-          <Col span={this.context.isMock ? 2: 3}  className="col-item col-item-setting">
+
+          <Col span={this.context.isMock ? 2 : 3} className="col-item col-item-setting">
             <span className="adv-set" onClick={this.handleShowAdv}>
               <Tooltip placement="top" title={LocaleProvider('adv_setting')}>
                 <Icon type="setting" />
@@ -445,12 +445,12 @@ class SchemaItem extends PureComponent {
             {value.type === 'object' ? (
               <DropPlus prefix={prefix} name={name} />
             ) : (
-              <span onClick={this.handleAddField}>
-                <Tooltip placement="top" title={LocaleProvider('add_sibling_node')}>
-                  <Icon type="plus" className="plus" />
-                </Tooltip>
-              </span>
-            )}
+                <span onClick={this.handleAddField}>
+                  <Tooltip placement="top" title={LocaleProvider('add_sibling_node')}>
+                    <Icon type="plus" className="plus" />
+                  </Tooltip>
+                </span>
+              )}
           </Col>
         </Row>
         <div className="option-formStyle">{mapping(prefixArray, value, showEdit, showAdv)}</div>
@@ -479,12 +479,14 @@ class SchemaObjectComponent extends Component {
 
   render() {
     const { data, prefix, showEdit, showAdv } = this.props;
-    
-    let key;
-    let isComplex;
+
     let nameArray = [].concat(prefix);
-    if((key = 'oneOf', data[key]) || (key = 'anyOf', data[key])) {
-      isComplex = !!data[key].length;
+    let { key } = utils.getComplexKey(data);
+    let isComplex = key ? true : false;
+
+    if (isComplex) {
+      // 将 properties 删除
+      // 增加 数组索引
       nameArray.splice(nameArray.length - 1, 1, key);
     }
 
@@ -506,20 +508,20 @@ class SchemaObjectComponent extends Component {
           })
         }
       </div>
-      ) : (
-      <div className="object-style">
-        {Object.keys(data.properties).map((name, index) => (
-          <SchemaItem
-            key={index}
-            data={this.props.data}
-            name={name}
-            prefix={prefix}
-            showEdit={showEdit}
-            showAdv={showAdv}
-          />
-        ))}
-      </div>
-    );
+    ) : (
+        <div className="object-style">
+          {Object.keys(data.properties).map((name, index) => (
+            <SchemaItem
+              key={index}
+              data={this.props.data}
+              name={name}
+              prefix={prefix}
+              showEdit={showEdit}
+              showAdv={showAdv}
+            />
+          ))}
+        </div>
+      );
   }
 }
 
@@ -596,7 +598,7 @@ class ComplexSchema extends PureComponent {
 
   render() {
     const { data, prefix, showEdit, showAdv } = this.props;
-
+    console.log(data);
     let prefixArrayStr = [].concat(prefix, 'properties').join(JSONPATH_JOIN_CHAR);
 
     let showIcon = this.context.getOpenValue([prefixArrayStr]);
@@ -610,13 +612,6 @@ class ComplexSchema extends PureComponent {
             style={this.__tagPaddingLeftStyle}
           >
             <Row type="flex" justify="space-around" align="middle" className="col-scene-item">
-              <Col span={24} className="scene-col">
-                <span>
-                  {LocaleProvider('scene')}: {data.description}
-                </span>
-              </Col>
-            </Row>
-            <Row type="flex" justify="space-around" align="middle" className="col-scene-item">
               <Col span={21}>
                 <Row type="flex" justify="space-around" align="middle">
                   <Col span={1} className="down-style-col">
@@ -624,20 +619,20 @@ class ComplexSchema extends PureComponent {
                       {showIcon ? (
                         <Icon className="icon-object" type="caret-down" />
                       ) : (
-                        <Icon className="icon-object" type="caret-right" />
-                      )}
+                          <Icon className="icon-object" type="caret-right" />
+                        )}
                     </span>
                   </Col>
                   <Col span={23}>
-                    <Input 
-                      placeholder={LocaleProvider('scene')}
+                    <Input
+                      placeholder={LocaleProvider('complex_description')}
                       value={data.description}
                       onChange={this.handleChangeDesc}
                     />
                   </Col>
-              </Row>
+                </Row>
               </Col>
-              <Col span={3}  className="col-item col-item-setting">
+              <Col span={3} className="col-item col-item-setting">
                 <span className="adv-set" onClick={this.handleShowAdv}>
                   <Tooltip placement="top" title={LocaleProvider('adv_setting')}>
                     <Icon type="setting" />

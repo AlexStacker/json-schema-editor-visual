@@ -270,7 +270,8 @@ class jsonSchema extends React.Component {
 
     let disabled =
       this.props.schema.type === 'object' || this.props.schema.type === 'array' ? false : true;
-    let isAddRootFiled = !((schema['oneOf'] && schema['oneOf'].length) || (schema['anyOf'] && schema['anyOf'].length));
+    let { key, data: data } = utils.getComplexKey(schema);
+    let isComplex = (data && data.length) ? true : false;
 
     return (
       <div className="json-schema-react-editor">
@@ -380,8 +381,8 @@ class jsonSchema extends React.Component {
                         {this.state.show ? (
                           <Icon className="icon-object" type="caret-down" />
                         ) : (
-                          <Icon className="icon-object" type="caret-right" />
-                        )}
+                            <Icon className="icon-object" type="caret-right" />
+                          )}
                       </span>
                     ) : null}
                   </Col>
@@ -468,7 +469,7 @@ class jsonSchema extends React.Component {
                   //     <Icon type="plus" className="plus" />
                   //   </Tooltip>
                   // </span>
-                  <DropPlus root prefix={['oneOf']} isAddRootFiled={isAddRootFiled}/>
+                  <DropPlus root prefix={[key ? key : 'oneOf']} isAddFiledDisabled={isComplex} />
                 ) : null}
               </Col>
             </Row>

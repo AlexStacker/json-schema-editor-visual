@@ -43,7 +43,7 @@ exports.defaultSchema = {
 // this.func = debounce(this.func, 400);
 exports.debounce = (func, wait) => {
   let timeout;
-  return function() {
+  return function () {
     clearTimeout(timeout);
     timeout = setTimeout(func, wait);
   };
@@ -59,7 +59,7 @@ function getData(state, keys) {
 
 exports.getData = getData;
 
-exports.setData = function(state, keys, value) {
+exports.setData = function (state, keys, value) {
   let curState = state;
   for (let i = 0; i < keys.length - 1; i++) {
     curState = curState[keys[i]];
@@ -67,7 +67,7 @@ exports.setData = function(state, keys, value) {
   curState[keys[keys.length - 1]] = value;
 };
 
-exports.deleteData = function(state, keys) {
+exports.deleteData = function (state, keys) {
   let curState = state;
   for (let i = 0; i < keys.length - 1; i++) {
     curState = curState[keys[i]];
@@ -76,14 +76,14 @@ exports.deleteData = function(state, keys) {
   delete curState[keys[keys.length - 1]];
 };
 
-exports.getParentKeys = function(keys) {
+exports.getParentKeys = function (keys) {
   if (keys.length === 1) return [];
   let arr = [].concat(keys);
   arr.splice(keys.length - 1, 1);
   return arr;
 };
 
-exports.clearSomeFields = function(keys, data) {
+exports.clearSomeFields = function (keys, data) {
   const newData = Object.assign({}, data);
   keys.forEach(key => {
     delete newData[key];
@@ -100,9 +100,29 @@ function getFieldstitle(data) {
   return requiredtitle;
 }
 
-function handleSchemaRequired(schema, checked) {
+function getComplexKey(data) {
+  let key;
+
+  switch (true) {
+    case data['oneOf'] && data['oneOf'].length && (key = 'oneOf'):
+      break;
+    case data['anyOf'] && data['anyOf'].length && (key = 'anyOf'):
+      break;
+    default:
+      break;
+  }
+
+  return {
+    key,
+    data: key && data[key]
+  }
+}
+
+exports.getComplexKey = getComplexKey;
+
+function handleSchemaRequired(schema, checked, isComplex) {
   // console.log(schema)
-  if (schema.type === 'object') {
+  if (isComplex || schema.type === 'object') {
     let requiredtitle = getFieldstitle(schema.properties);
 
     // schema.required = checked ? [].concat(requiredtitle) : [];
@@ -112,7 +132,15 @@ function handleSchemaRequired(schema, checked) {
       delete schema.required;
     }
 
-    handleObject(schema.properties, checked);
+    let { key, data } = getComplexKey(schema);
+    if (key) {
+      data.forEach(function (s) {
+        handleSchemaRequired(s, checked, true);
+      });
+    } else {
+      handleObject(schema.properties, checked);
+    }
+
   } else if (schema.type === 'array') {
     handleSchemaRequired(schema.items, checked);
   } else {
@@ -133,7 +161,7 @@ function cloneObject(obj) {
   if (typeof obj === 'object') {
     if (Array.isArray(obj)) {
       var newArr = [];
-      obj.forEach(function(item, index) {
+      obj.forEach(function (item, index) {
         newArr[index] = cloneObject(item);
       });
       return newArr;

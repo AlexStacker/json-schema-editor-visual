@@ -9,47 +9,45 @@ import PropTypes from 'prop-types';
 import LocaleProvider from '../LocalProvider/index.js';
 
 const DropPlus = (props, context) => {
-  const { prefix, name, root, isAddRootFiled } = props;
+  const { prefix, name, root, isAddFiledDisabled } = props;
   const Model = context.Model.schema;
   const menu = (
-    root ? 
-    <Menu>
-      {isAddRootFiled ? <Menu.Item>
-        <span
+    root ?
+      <Menu>
+        <Menu.Item disabled={isAddFiledDisabled}
           onClick={() => {
             Model.setOpenValueAction({ key: ['properties'], value: true });
             Model.addChildFieldAction({ key: ['properties'] });
-            return false;
           }}
         >
-          {LocaleProvider('add_child_node')}
-        </span>
-      </Menu.Item> : null }
-      <Menu.Item>
-        <span onClick={() => Model.addComplexFieldAction({ prefix, name })}>
-          {LocaleProvider('add_scene_node')}
-        </span>
-      </Menu.Item>
-    </Menu>
-    :
-    <Menu>
-      <Menu.Item>
-        <span onClick={() => Model.addFieldAction({ prefix, name })}>
-          {LocaleProvider('sibling_node')}
-        </span>
-      </Menu.Item>
-      <Menu.Item>
-        <span
-          onClick={() => {
-            Model.setOpenValueAction({ key: [].concat(prefix, name, 'properties'), value: true });
-            Model.addChildFieldAction({ key: [].concat(prefix, name, 'properties') });
-            return false;
-          }}
+          <span
+          >
+            {LocaleProvider('add_child_node')}
+          </span>
+        </Menu.Item>
+        <Menu.Item onClick={() => Model.addComplexFieldAction({ prefix, name })}>
+          <span>
+            {LocaleProvider('add_complex_node')}
+          </span>
+        </Menu.Item>
+      </Menu>
+      :
+      <Menu>
+        <Menu.Item onClick={() => Model.addFieldAction({ prefix, name })}>
+          <span>
+            {LocaleProvider('sibling_node')}
+          </span>
+        </Menu.Item>
+        <Menu.Item onClick={() => {
+          Model.setOpenValueAction({ key: [].concat(prefix, name, 'properties'), value: true });
+          Model.addChildFieldAction({ key: [].concat(prefix, name, 'properties') });
+        }}
         >
-          {LocaleProvider('child_node')}
-        </span>
-      </Menu.Item>
-    </Menu>
+          <span>
+            {LocaleProvider('child_node')}
+          </span>
+        </Menu.Item>
+      </Menu>
   );
 
   return (
